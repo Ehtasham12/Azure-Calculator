@@ -1,0 +1,971 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Azure RAG Chatbot — Cost Estimator</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0d0f14;
+    --bg2: #13161e;
+    --bg3: #1a1e28;
+    --border: #2a2f3d;
+    --border2: #363d52;
+    --text: #e8eaf0;
+    --muted: #7a8099;
+    --dim: #4a5068;
+    --blue: #4d9fff;
+    --blue-dim: #1a3a5c;
+    --teal: #2dd4a0;
+    --teal-dim: #0d3326;
+    --amber: #f5a623;
+    --amber-dim: #3d2800;
+    --red: #ff5f5f;
+    --red-dim: #3d1515;
+    --green: #4cde8a;
+    --green-dim: #0d2e1a;
+    --purple: #a78bfa;
+    --purple-dim: #2a1f4a;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font-sans);
+    font-size: 14px;
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* HEADER */
+  header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .logo {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .logo-icon {
+    width: 32px; height: 32px;
+    background: var(--blue);
+    border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 600;
+    color: #fff;
+    letter-spacing: -1px;
+  }
+  .logo-text {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    letter-spacing: .02em;
+  }
+  .logo-sub {
+    font-size: 11px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+  .header-tag {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--teal);
+    background: var(--teal-dim);
+    padding: 3px 10px;
+    border-radius: 4px;
+    border: 1px solid var(--teal);
+  }
+
+  /* LAYOUT */
+  .container {
+    max-width: 1100px;
+    margin: 0 auto;
+    padding: 28px 32px;
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 20px;
+  }
+
+  /* PANELS */
+  .panel {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+  .panel-header {
+    padding: 12px 18px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .panel-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+  }
+  .panel-title {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .panel-body { padding: 18px; }
+
+  /* SLIDERS */
+  .slider-group { margin-bottom: 18px; }
+  .slider-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 6px;
+  }
+  .slider-name {
+    font-size: 12px;
+    color: var(--muted);
+    font-family: var(--font-mono);
+  }
+  .slider-val {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--blue);
+  }
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 3px;
+    background: var(--border2);
+    border-radius: 2px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--blue);
+    border: 2px solid var(--bg2);
+    cursor: pointer;
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--blue);
+    border: 2px solid var(--bg2);
+    cursor: pointer;
+  }
+
+  /* SELECT */
+  .select-group { margin-bottom: 18px; }
+  .select-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    margin-bottom: 6px;
+    display: block;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+  }
+  select {
+    width: 100%;
+    background: var(--bg3);
+    color: var(--text);
+    border: 1px solid var(--border2);
+    border-radius: 6px;
+    padding: 8px 10px;
+    font-family: var(--font-mono);
+    font-size: 12px;
+    cursor: pointer;
+    outline: none;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%237a8099' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14L2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+  }
+  select:focus { border-color: var(--blue); }
+
+  /* TOGGLES */
+  .toggle-group {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+    padding: 10px 12px;
+    background: var(--bg3);
+    border-radius: 7px;
+    border: 1px solid var(--border);
+  }
+  .toggle-info { flex: 1; }
+  .toggle-name {
+    font-size: 12px;
+    color: var(--text);
+    font-weight: 500;
+  }
+  .toggle-desc {
+    font-size: 11px;
+    color: var(--muted);
+    margin-top: 2px;
+  }
+  .toggle-switch {
+    position: relative;
+    width: 36px; height: 20px;
+    flex-shrink: 0;
+    margin-left: 12px;
+  }
+  .toggle-switch input { display: none; }
+  .toggle-track {
+    position: absolute;
+    inset: 0;
+    background: var(--border2);
+    border-radius: 10px;
+    cursor: pointer;
+    transition: background .2s;
+  }
+  .toggle-track::after {
+    content: '';
+    position: absolute;
+    left: 3px; top: 3px;
+    width: 14px; height: 14px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: transform .2s, background .2s;
+  }
+  .toggle-switch input:checked + .toggle-track { background: var(--blue); }
+  .toggle-switch input:checked + .toggle-track::after {
+    transform: translateX(16px);
+    background: #fff;
+  }
+
+  /* METRICS ROW */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 10px;
+    margin-bottom: 20px;
+  }
+  .metric-card {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px 14px;
+  }
+  .metric-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin-bottom: 4px;
+  }
+  .metric-value {
+    font-family: var(--font-mono);
+    font-size: 18px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .metric-value.blue { color: var(--blue); }
+  .metric-value.teal { color: var(--teal); }
+  .metric-value.amber { color: var(--amber); }
+
+  /* COST SECTIONS */
+  .cost-section { margin-bottom: 16px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    border-radius: 6px;
+    margin-bottom: 2px;
+    cursor: pointer;
+    user-select: none;
+  }
+  .section-header:hover { filter: brightness(1.1); }
+  .section-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .section-badge {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 2px 7px;
+    border-radius: 3px;
+  }
+  .section-total {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+  }
+  .section-rows { padding: 0 4px; }
+  .cost-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 7px 10px;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .cost-row:last-child { border-bottom: none; }
+  .cost-name { color: var(--muted); flex: 1; }
+  .cost-tag {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    padding: 1px 6px;
+    border-radius: 3px;
+    margin: 0 8px;
+    flex-shrink: 0;
+  }
+  .tag-var { background: var(--blue-dim); color: var(--blue); }
+  .tag-fixed { background: var(--green-dim); color: var(--green); }
+  .tag-est { background: var(--amber-dim); color: var(--amber); }
+  .tag-free { background: var(--purple-dim); color: var(--purple); }
+  .cost-amt {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    font-weight: 500;
+    color: var(--text);
+    min-width: 70px;
+    text-align: right;
+  }
+
+  /* SECTION COLORS */
+  .sh-ai    { background: #0e1d2e; }
+  .sh-ai    .section-label  { color: var(--blue); }
+  .sh-ai    .section-total  { color: var(--blue); }
+  .sh-ai    .section-badge  { background: var(--blue-dim); color: var(--blue); }
+
+  .sh-data  { background: #0a2018; }
+  .sh-data  .section-label  { color: var(--teal); }
+  .sh-data  .section-total  { color: var(--teal); }
+  .sh-data  .section-badge  { background: var(--teal-dim); color: var(--teal); }
+
+  .sh-comp  { background: #2a1f0a; }
+  .sh-comp  .section-label  { color: var(--amber); }
+  .sh-comp  .section-total  { color: var(--amber); }
+  .sh-comp  .section-badge  { background: var(--amber-dim); color: var(--amber); }
+
+  .sh-found { background: #1e1030; }
+  .sh-found .section-label  { color: var(--purple); }
+  .sh-found .section-total  { color: var(--purple); }
+  .sh-found .section-badge  { background: var(--purple-dim); color: var(--purple); }
+
+  .sh-obs   { background: #1a1010; }
+  .sh-obs   .section-label  { color: var(--red); }
+  .sh-obs   .section-total  { color: var(--red); }
+  .sh-obs   .section-badge  { background: var(--red-dim); color: var(--red); }
+
+  /* GRAND TOTAL */
+  .grand-total {
+    background: var(--bg3);
+    border: 1px solid var(--blue);
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-top: 6px;
+  }
+  .grand-main {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 8px;
+  }
+  .grand-label {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+  }
+  .grand-amount {
+    font-family: var(--font-mono);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--blue);
+  }
+  .grand-sub {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--muted);
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .grand-sub span { color: var(--text); }
+
+  /* BREAKDOWN BAR */
+  .bar-container { margin: 16px 0 8px; }
+  .bar-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    margin-bottom: 6px;
+  }
+  .bar {
+    display: flex;
+    height: 8px;
+    border-radius: 4px;
+    overflow: hidden;
+    gap: 1px;
+    background: var(--border);
+  }
+  .bar-seg { height: 100%; transition: width .4s ease; }
+  .bar-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-top: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--muted);
+  }
+  .legend-dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+
+  /* FOOTER */
+  footer {
+    text-align: center;
+    padding: 20px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    color: var(--dim);
+    border-top: 1px solid var(--border);
+    margin-top: 8px;
+  }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 3px; }
+
+  @media (max-width: 800px) {
+    .container { grid-template-columns: 1fr; padding: 16px; }
+    header { padding: 14px 16px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-icon">AZ</div>
+    <div>
+      <div class="logo-text">RAG Cost Estimator</div>
+      <div class="logo-sub">Azure · Banking Grade · v1.0</div>
+    </div>
+  </div>
+  <div class="header-tag">MCB Bank / ExpertFlow</div>
+</header>
+
+<div class="container">
+
+  <!-- LEFT: CONTROLS -->
+  <div>
+    <div class="panel" style="margin-bottom:16px">
+      <div class="panel-header">
+        <div class="panel-dot" style="background:var(--blue)"></div>
+        <span class="panel-title">Workload Parameters</span>
+      </div>
+      <div class="panel-body">
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Conversations / day</span>
+            <span class="slider-val" id="v_conv">50</span>
+          </div>
+          <input type="range" id="s_conv" min="10" max="1000" step="10" value="50">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Messages / conversation</span>
+            <span class="slider-val" id="v_msg">50</span>
+          </div>
+          <input type="range" id="s_msg" min="5" max="200" step="5" value="50">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Avg words / message</span>
+            <span class="slider-val" id="v_words">10</span>
+          </div>
+          <input type="range" id="s_words" min="5" max="150" step="5" value="10">
+        </div>
+
+        <div class="slider-group">
+          <div class="slider-label">
+            <span class="slider-name">Output : input token ratio</span>
+            <span class="slider-val" id="v_ratio">2×</span>
+          </div>
+          <input type="range" id="s_ratio" min="1" max="6" step="1" value="2">
+        </div>
+
+        <div class="select-group">
+          <label class="select-label">Main LLM model</label>
+          <select id="sel_llm">
+            <option value="0">GPT-4o mini — $0.15 / $0.60 per 1M tokens</option>
+            <option value="1">GPT-4.1 nano — $0.10 / $0.40 per 1M tokens</option>
+            <option value="2">GPT-4.1 mini — $0.40 / $1.60 per 1M tokens</option>
+            <option value="3">GPT-4o — $2.50 / $10.00 per 1M tokens</option>
+            <option value="4">GPT-4.1 — $2.00 / $8.00 per 1M tokens</option>
+          </select>
+        </div>
+
+        <div class="select-group">
+          <label class="select-label">Judge LLM model</label>
+          <select id="sel_judge">
+            <option value="0" selected>GPT-4o mini — $0.15 / $0.60 per 1M (recommended)</option>
+            <option value="1">GPT-4.1 nano — $0.10 / $0.40 per 1M (cheapest)</option>
+            <option value="2">Same as main LLM</option>
+          </select>
+        </div>
+
+        <div class="select-group">
+          <label class="select-label">Intent classifier model</label>
+          <select id="sel_intent">
+            <option value="0" selected>GPT-4o mini — $0.15 / $0.60 per 1M (default)</option>
+            <option value="1">GPT-4.1 nano — $0.10 / $0.40 per 1M (cheapest)</option>
+            <option value="2">GPT-4.1 mini — $0.40 / $1.60 per 1M</option>
+          </select>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-dot" style="background:var(--purple)"></div>
+        <span class="panel-title">Optional Components</span>
+      </div>
+      <div class="panel-body">
+        <div class="toggle-group">
+          <div class="toggle-info">
+            <div class="toggle-name">Judge LLM (hallucination eval)</div>
+            <div class="toggle-desc">Evaluates every 10th response for hallucination</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="t_judge" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-group">
+          <div class="toggle-info">
+            <div class="toggle-name">Intent classifier</div>
+            <div class="toggle-desc">Called on every incoming message</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="t_intent" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-group">
+          <div class="toggle-info">
+            <div class="toggle-name">PII scrubbing service</div>
+            <div class="toggle-desc">Masks PII before LLM call (compute cost)</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="t_pii" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-group">
+          <div class="toggle-info">
+            <div class="toggle-name">Azure Private Endpoints</div>
+            <div class="toggle-desc">4× endpoints — required for banking compliance</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="t_pe" checked>
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+        <div class="toggle-group">
+          <div class="toggle-info">
+            <div class="toggle-name">GPU inference (self-hosted LLM)</div>
+            <div class="toggle-desc">NC4as T4 v3 VM — $0.526/hr on-demand</div>
+          </div>
+          <label class="toggle-switch">
+            <input type="checkbox" id="t_gpu">
+            <span class="toggle-track"></span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT: BREAKDOWN -->
+  <div>
+    <!-- METRICS -->
+    <div class="metrics-row">
+      <div class="metric-card">
+        <div class="metric-label">Messages / month</div>
+        <div class="metric-value blue" id="m_msgs">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Total tokens / month</div>
+        <div class="metric-value teal" id="m_tokens">—</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-label">Cost per message</div>
+        <div class="metric-value amber" id="m_cpm">—</div>
+      </div>
+    </div>
+
+    <!-- COST SECTIONS -->
+    <div class="panel">
+      <div class="panel-header">
+        <div class="panel-dot" style="background:var(--teal)"></div>
+        <span class="panel-title">Monthly Cost Breakdown</span>
+      </div>
+      <div class="panel-body">
+
+        <!-- AI Services -->
+        <div class="cost-section">
+          <div class="section-header sh-ai">
+            <div class="section-left">
+              <span class="section-label">① AI &amp; LLM Services</span>
+              <span class="section-badge" id="sb_ai">variable</span>
+            </div>
+            <span class="section-total" id="st_ai">—</span>
+          </div>
+          <div class="section-rows" id="rows_ai"></div>
+        </div>
+
+        <!-- Data -->
+        <div class="cost-section">
+          <div class="section-header sh-data">
+            <div class="section-left">
+              <span class="section-label">② Data &amp; Search</span>
+              <span class="section-badge">fixed</span>
+            </div>
+            <span class="section-total" id="st_data">—</span>
+          </div>
+          <div class="section-rows" id="rows_data"></div>
+        </div>
+
+        <!-- Compute -->
+        <div class="cost-section">
+          <div class="section-header sh-comp">
+            <div class="section-left">
+              <span class="section-label">③ Compute &amp; Hosting</span>
+              <span class="section-badge">fixed</span>
+            </div>
+            <span class="section-total" id="st_comp">—</span>
+          </div>
+          <div class="section-rows" id="rows_comp"></div>
+        </div>
+
+        <!-- Foundation -->
+        <div class="cost-section">
+          <div class="section-header sh-found">
+            <div class="section-left">
+              <span class="section-label">④ Azure Tenant Foundation</span>
+              <span class="section-badge">fixed</span>
+            </div>
+            <span class="section-total" id="st_found">—</span>
+          </div>
+          <div class="section-rows" id="rows_found"></div>
+        </div>
+
+        <!-- Observability -->
+        <div class="cost-section">
+          <div class="section-header sh-obs">
+            <div class="section-left">
+              <span class="section-label">⑤ Observability &amp; Monitoring</span>
+              <span class="section-badge">fixed</span>
+            </div>
+            <span class="section-total" id="st_obs">—</span>
+          </div>
+          <div class="section-rows" id="rows_obs"></div>
+        </div>
+
+        <!-- Bar -->
+        <div class="bar-container">
+          <div class="bar-label">cost distribution</div>
+          <div class="bar">
+            <div class="bar-seg" id="bar_ai"  style="background:var(--blue)"></div>
+            <div class="bar-seg" id="bar_data" style="background:var(--teal)"></div>
+            <div class="bar-seg" id="bar_comp" style="background:var(--amber)"></div>
+            <div class="bar-seg" id="bar_found"style="background:var(--purple)"></div>
+            <div class="bar-seg" id="bar_obs"  style="background:var(--red)"></div>
+          </div>
+          <div class="bar-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:var(--blue)"></div><span id="leg_ai">AI</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--teal)"></div><span id="leg_data">Data</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--amber)"></div><span id="leg_comp">Compute</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--purple)"></div><span id="leg_found">Foundation</span></div>
+            <div class="legend-item"><div class="legend-dot" style="background:var(--red)"></div><span id="leg_obs">Observability</span></div>
+          </div>
+        </div>
+
+        <!-- Grand Total -->
+        <div class="grand-total">
+          <div class="grand-main">
+            <span class="grand-label">Total / month (USD)</span>
+            <span class="grand-amount" id="grand_month">—</span>
+          </div>
+          <div class="grand-sub">
+            <span>Annual estimate</span>
+            <span id="grand_year">—</span>
+          </div>
+          <div class="grand-sub" style="margin-top:6px">
+            <span>AI share of total</span>
+            <span id="grand_aipct">—</span>
+          </div>
+          <div class="grand-sub" style="margin-top:2px">
+            <span>Foundation share of total</span>
+            <span id="grand_fpct">—</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<footer>
+  Prices based on publicly available Azure pricing (May 2026) · GPT-4o / GPT-4.1 series via Azure OpenAI Service
+  · Azure AI Search Basic · Container Apps Consumption Plan · Estimates only — verify with Azure Pricing Calculator
+</footer>
+
+<script>
+var MODELS = [
+  {name:'GPT-4o mini',  inp:0.15, out:0.60},
+  {name:'GPT-4.1 nano', inp:0.10, out:0.40},
+  {name:'GPT-4.1 mini', inp:0.40, out:1.60},
+  {name:'GPT-4o',       inp:2.50, out:10.00},
+  {name:'GPT-4.1',      inp:2.00, out:8.00},
+];
+var JUDGE_MODELS = [
+  {name:'GPT-4o mini',  inp:0.15, out:0.60},
+  {name:'GPT-4.1 nano', inp:0.10, out:0.40},
+  null,
+];
+var INTENT_MODELS = [
+  {name:'GPT-4o mini',  inp:0.15, out:0.60},
+  {name:'GPT-4.1 nano', inp:0.10, out:0.40},
+  {name:'GPT-4.1 mini', inp:0.40, out:1.60},
+];
+
+function g(id){ return document.getElementById(id); }
+function fmt(n){ return '$' + n.toFixed(2); }
+function fmtM(n){
+  if(n >= 1e6) return (n/1e6).toFixed(2)+'M';
+  if(n >= 1e3) return (n/1e3).toFixed(1)+'K';
+  return Math.round(n).toString();
+}
+function pct(n,t){ return t > 0 ? Math.round(n/t*100)+'%' : '0%'; }
+
+function makeRow(name, tag, tagClass, amt){
+  return '<div class="cost-row">' +
+    '<span class="cost-name">' + name + '</span>' +
+    '<span class="cost-tag ' + tagClass + '">' + tag + '</span>' +
+    '<span class="cost-amt">' + fmt(amt) + '</span>' +
+  '</div>';
+}
+
+function calc(){
+  var convDay  = parseInt(g('s_conv').value);
+  var msgConv  = parseInt(g('s_msg').value);
+  var words    = parseInt(g('s_words').value);
+  var ratio    = parseInt(g('s_ratio').value);
+  var mainM    = MODELS[parseInt(g('sel_llm').value)];
+  var judgeIdx = parseInt(g('sel_judge').value);
+  var judgeM   = judgeIdx === 2 ? mainM : JUDGE_MODELS[judgeIdx];
+  var intentM  = INTENT_MODELS[parseInt(g('sel_intent').value)];
+
+  var useJudge  = g('t_judge').checked;
+  var useIntent = g('t_intent').checked;
+  var usePII    = g('t_pii').checked;
+  var usePE     = g('t_pe').checked;
+  var useGPU    = g('t_gpu').checked;
+
+  g('v_conv').textContent  = convDay;
+  g('v_msg').textContent   = msgConv;
+  g('v_words').textContent = words;
+  g('v_ratio').textContent = ratio + '×';
+
+  // TOKEN MATH
+  var tokPerWord   = 1.33;
+  var inpTokMsg    = words * tokPerWord;
+  var ragCtxTok    = inpTokMsg * 3;          // RAG context: 3x message
+  var totalInpTok  = inpTokMsg + ragCtxTok;
+  var outTokMsg    = inpTokMsg * ratio;
+  var msgsMonth    = convDay * msgConv * 30;
+  var inpM         = (totalInpTok * msgsMonth) / 1e6;
+  var outM         = (outTokMsg   * msgsMonth) / 1e6;
+
+  // MAIN LLM
+  var llmMain   = inpM * mainM.inp + outM * mainM.out;
+
+  // JUDGE LLM: 10% of messages, smaller prompt (just response + context)
+  var judgeCost = 0;
+  if(useJudge){
+    var jInpM = (inpM * 0.10);
+    var jOutM = 0.05 * msgsMonth / 1e6;  // short score output
+    judgeCost = jInpM * judgeM.inp + jOutM * judgeM.out;
+  }
+
+  // INTENT CLASSIFIER: every message, short prompt (~50 tokens in, ~5 tokens out)
+  var intentCost = 0;
+  if(useIntent){
+    var iInpTok = 50;
+    var iOutTok = 5;
+    var iInpM = (iInpTok * msgsMonth) / 1e6;
+    var iOutM = (iOutTok * msgsMonth) / 1e6;
+    intentCost = iInpM * intentM.inp + iOutM * intentM.out;
+  }
+
+  // PII SCRUBBING: compute cost on Container Apps (included in compute, flat est.)
+  var piiCost = usePII ? 5.00 : 0;
+
+  // EMBEDDINGS: per query (input only, small model)
+  var embCost = (inpM * 0.5) * 0.02;
+
+  var aiTotal = llmMain + judgeCost + intentCost + embCost;
+
+  // DATA
+  var azSearch  = 73.73;
+  var blobStore = 5.00;
+  var dataTotal = azSearch + blobStore;
+
+  // COMPUTE
+  var containerApp = 25.00;
+  var langflowVm   = 20.00;
+  var gpuCost      = useGPU ? 380.00 : 0;   // NC4as T4 v3 ~$0.526/hr × 720h
+  var computeTotal = containerApp + langflowVm + piiCost + gpuCost;
+
+  // FOUNDATION (Azure tenant)
+  var keyVault   = 5.00;
+  var privateEp  = usePE ? 4 * 7.30 : 0;
+  var privDns    = usePE ? 3 * 0.50  : 0;
+  var entraId    = 6.00;
+  var policy     = 3.00;
+  var subMgmt    = 5.00;
+  var foundTotal = keyVault + privateEp + privDns + entraId + policy + subMgmt;
+
+  // OBSERVABILITY
+  var monitor    = 10.00;
+  var logWs      = 8.00;
+  var appIns     = 5.00;
+  var langfuse   = 12.00;
+  var obsTotal   = monitor + logWs + appIns + langfuse;
+
+  var grand  = aiTotal + dataTotal + computeTotal + foundTotal + obsTotal;
+  var yearly = grand * 12;
+
+  // METRICS
+  var totalTokMonth = (totalInpTok + outTokMsg) * msgsMonth;
+  g('m_msgs').textContent   = fmtM(msgsMonth);
+  g('m_tokens').textContent = fmtM(totalTokMonth);
+  g('m_cpm').textContent    = '$' + (llmMain / msgsMonth).toFixed(5);
+
+  // AI ROWS
+  var aiRows = makeRow('Main LLM — ' + mainM.name, 'variable', 'tag-var', llmMain);
+  if(useJudge)  aiRows += makeRow('Judge LLM — ' + judgeM.name + ' (10% of calls)', 'variable', 'tag-var', judgeCost);
+  if(useIntent) aiRows += makeRow('Intent classifier — ' + intentM.name + ' (every message)', 'variable', 'tag-var', intentCost);
+  aiRows += makeRow('Embeddings — text-embedding-3-small', 'variable', 'tag-var', embCost);
+  g('rows_ai').innerHTML = aiRows;
+  g('st_ai').textContent = fmt(aiTotal);
+
+  // DATA ROWS
+  g('rows_data').innerHTML =
+    makeRow('Azure AI Search — Basic tier (1 SU)', 'fixed', 'tag-fixed', azSearch) +
+    makeRow('Azure Blob Storage — docs + vector chunks', 'fixed', 'tag-fixed', blobStore);
+  g('st_data').textContent = fmt(dataTotal);
+
+  // COMPUTE ROWS
+  var compRows =
+    makeRow('Container Apps — Langflow + FastAPI (RAG)', 'fixed', 'tag-fixed', containerApp) +
+    makeRow('Container Apps — Langfuse self-hosted', 'fixed', 'tag-fixed', langflowVm);
+  if(usePII)  compRows += makeRow('PII scrubbing service (compute overhead)', 'est.', 'tag-est', piiCost);
+  if(useGPU)  compRows += makeRow('GPU VM — NC4as T4 v3 (self-hosted LLM) ~$0.526/hr', 'fixed', 'tag-fixed', gpuCost);
+  g('rows_comp').innerHTML = compRows;
+  g('st_comp').textContent = fmt(computeTotal);
+
+  // FOUNDATION ROWS
+  var foundRows =
+    makeRow('Azure Key Vault — API keys, secrets, certs', 'fixed', 'tag-fixed', keyVault);
+  if(usePE){
+    foundRows += makeRow('Private Endpoints × 4 (OpenAI, Search, Blob, KV) @ $7.30 each', 'fixed', 'tag-fixed', privateEp);
+    foundRows += makeRow('Private DNS Zones × 3 @ $0.50/zone', 'fixed', 'tag-fixed', privDns);
+  }
+  foundRows +=
+    makeRow('Microsoft Entra ID — managed identities + app reg', 'fixed', 'tag-fixed', entraId) +
+    makeRow('Azure Policy — compliance rules (banking)', 'fixed', 'tag-fixed', policy) +
+    makeRow('RBAC / Role assignments', 'free', 'tag-free', 0) +
+    makeRow('Subscription / Resource Group management', 'est.', 'tag-est', subMgmt);
+  g('rows_found').innerHTML = foundRows;
+  g('st_found').textContent = fmt(foundTotal);
+
+  // OBS ROWS
+  g('rows_obs').innerHTML =
+    makeRow('Azure Monitor — metrics, dashboards, alerts', 'fixed', 'tag-fixed', monitor) +
+    makeRow('Log Analytics Workspace — ~5 GB/day logs', 'fixed', 'tag-fixed', logWs) +
+    makeRow('Application Insights — distributed tracing', 'fixed', 'tag-fixed', appIns) +
+    makeRow('Langfuse — self-hosted storage + container', 'fixed', 'tag-fixed', langfuse);
+  g('st_obs').textContent = fmt(obsTotal);
+
+  // BAR
+  var segs = [
+    {id:'bar_ai',   v:aiTotal},
+    {id:'bar_data', v:dataTotal},
+    {id:'bar_comp', v:computeTotal},
+    {id:'bar_found',v:foundTotal},
+    {id:'bar_obs',  v:obsTotal},
+  ];
+  segs.forEach(function(s){
+    g(s.id).style.width = pct(s.v, grand);
+  });
+  g('leg_ai').textContent    = 'AI ' + pct(aiTotal, grand);
+  g('leg_data').textContent  = 'Data ' + pct(dataTotal, grand);
+  g('leg_comp').textContent  = 'Compute ' + pct(computeTotal, grand);
+  g('leg_found').textContent = 'Foundation ' + pct(foundTotal, grand);
+  g('leg_obs').textContent   = 'Observability ' + pct(obsTotal, grand);
+
+  // GRAND
+  g('grand_month').textContent = fmt(grand);
+  g('grand_year').textContent  = fmt(yearly) + ' / year';
+  g('grand_aipct').textContent = pct(aiTotal, grand) + ' of total';
+  g('grand_fpct').textContent  = pct(foundTotal, grand) + ' of total';
+}
+
+var ids = ['s_conv','s_msg','s_words','s_ratio','sel_llm','sel_judge','sel_intent',
+           't_judge','t_intent','t_pii','t_pe','t_gpu'];
+ids.forEach(function(id){ g(id).addEventListener('input', calc); });
+calc();
+</script>
+</body>
+</html>
