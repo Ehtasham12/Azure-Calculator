@@ -484,10 +484,10 @@
     <div class="logo-icon">AZ</div>
     <div>
       <div class="logo-text">RAG Cost Estimator</div>
-      <div class="logo-sub">Azure · Banking Grade · v1.0</div>
+      <div class="logo-sub">Azure · Banking Grade · v1.2</div>
     </div>
   </div>
-  <div class="header-tag">MCB Bank / ExpertFlow</div>
+  <div class="header-tag">Azure OpenAI · ExpertFlow</div>
 </header>
 
 <div class="container">
@@ -506,7 +506,7 @@
             <span class="slider-name">Conversations / day</span>
             <span class="slider-val" id="v_conv">50</span>
           </div>
-          <input type="range" id="s_conv" min="10" max="1000" step="10" value="50">
+          <input type="range" id="s_conv" min="10" max="10000" step="50" value="50">
         </div>
 
         <div class="slider-group">
@@ -514,7 +514,7 @@
             <span class="slider-name">Messages / conversation</span>
             <span class="slider-val" id="v_msg">50</span>
           </div>
-          <input type="range" id="s_msg" min="5" max="200" step="5" value="50">
+          <input type="range" id="s_msg" min="5" max="10000" step="50" value="50">
         </div>
 
         <div class="slider-group">
@@ -536,11 +536,26 @@
         <div class="select-group">
           <label class="select-label">Main LLM model</label>
           <select id="sel_llm">
-            <option value="0">GPT-4o mini — $0.15 / $0.60 per 1M tokens</option>
-            <option value="1">GPT-4.1 nano — $0.10 / $0.40 per 1M tokens</option>
-            <option value="2">GPT-4.1 mini — $0.40 / $1.60 per 1M tokens</option>
-            <option value="3">GPT-4o — $2.50 / $10.00 per 1M tokens</option>
-            <option value="4">GPT-4.1 — $2.00 / $8.00 per 1M tokens</option>
+            <optgroup label="── GPT-5 Family ──────────────────">
+            <option value="0">GPT-5-nano — $0.05 / $0.40 per 1M tokens</option>
+            <option value="1">GPT-5-mini — $0.25 / $2.00 per 1M tokens</option>
+            <option value="2">GPT-5 — $1.25 / $10.00 per 1M tokens</option>
+            <option value="3">GPT-5 Pro — $15.00 / $120.00 per 1M tokens</option>
+            </optgroup>
+            <optgroup label="── GPT-4.1 Family ────────────────">
+            <option value="4">GPT-4.1 nano — $0.10 / $0.40 per 1M tokens</option>
+            <option value="5">GPT-4.1 mini — $0.40 / $1.60 per 1M tokens</option>
+            <option value="6">GPT-4.1 — $2.00 / $8.00 per 1M tokens</option>
+            </optgroup>
+            <optgroup label="── GPT-4o Family ─────────────────">
+            <option value="7">GPT-4o mini — $0.15 / $0.60 per 1M tokens</option>
+            <option value="8">GPT-4o — $2.50 / $10.00 per 1M tokens</option>
+            </optgroup>
+            <optgroup label="── o-Series Reasoning ────────────">
+            <option value="9">o4-mini — $1.10 / $4.40 per 1M tokens</option>
+            <option value="10">o3-mini — $1.10 / $4.40 per 1M tokens</option>
+            <option value="11">o3 — $10.00 / $40.00 per 1M tokens</option>
+            </optgroup>
           </select>
         </div>
 
@@ -549,7 +564,10 @@
           <select id="sel_judge">
             <option value="0" selected>GPT-4o mini — $0.15 / $0.60 per 1M (recommended)</option>
             <option value="1">GPT-4.1 nano — $0.10 / $0.40 per 1M (cheapest)</option>
-            <option value="2">Same as main LLM</option>
+            <option value="2">GPT-5-nano — $0.05 / $0.40 per 1M (cheapest overall)</option>
+            <option value="3">o4-mini — $1.10 / $4.40 per 1M (reasoning)</option>
+            <option value="4">o3-mini — $1.10 / $4.40 per 1M (reasoning)</option>
+            <option value="5">Same as main LLM</option>
           </select>
         </div>
 
@@ -558,7 +576,9 @@
           <select id="sel_intent">
             <option value="0" selected>GPT-4o mini — $0.15 / $0.60 per 1M (default)</option>
             <option value="1">GPT-4.1 nano — $0.10 / $0.40 per 1M (cheapest)</option>
-            <option value="2">GPT-4.1 mini — $0.40 / $1.60 per 1M</option>
+            <option value="2">GPT-5-nano — $0.05 / $0.40 per 1M (cheapest overall)</option>
+            <option value="3">GPT-4.1 mini — $0.40 / $1.60 per 1M</option>
+            <option value="4">o4-mini — $1.10 / $4.40 per 1M (reasoning)</option>
           </select>
         </div>
 
@@ -756,27 +776,43 @@
 </div>
 
 <footer>
-  Prices based on publicly available Azure pricing (May 2026) · GPT-4o / GPT-4.1 series via Azure OpenAI Service
+  Prices based on publicly available Azure pricing (May 2026) · GPT-5 / GPT-4o / GPT-4.1 / o3 / o4-mini series via Azure OpenAI Service
   · Azure AI Search Basic · Container Apps Consumption Plan · Estimates only — verify with Azure Pricing Calculator
 </footer>
 
 <script>
 var MODELS = [
-  {name:'GPT-4o mini',  inp:0.15, out:0.60},
-  {name:'GPT-4.1 nano', inp:0.10, out:0.40},
-  {name:'GPT-4.1 mini', inp:0.40, out:1.60},
-  {name:'GPT-4o',       inp:2.50, out:10.00},
-  {name:'GPT-4.1',      inp:2.00, out:8.00},
+  // ── GPT-5 family ─────────────────────────────────────────
+  {name:'GPT-5-nano',   inp:0.05,  out:0.40,  tag:'GPT-5 · nano'},
+  {name:'GPT-5-mini',   inp:0.25,  out:2.00,  tag:'GPT-5 · mini'},
+  {name:'GPT-5',        inp:1.25,  out:10.00, tag:'GPT-5 · flagship'},
+  {name:'GPT-5 Pro',    inp:15.00, out:120.00,tag:'GPT-5 · pro'},
+  // ── GPT-4.1 family ───────────────────────────────────────
+  {name:'GPT-4.1 nano', inp:0.10,  out:0.40,  tag:'GPT-4.1 · nano'},
+  {name:'GPT-4.1 mini', inp:0.40,  out:1.60,  tag:'GPT-4.1 · mini'},
+  {name:'GPT-4.1',      inp:2.00,  out:8.00,  tag:'GPT-4.1 · flagship'},
+  // ── GPT-4o family ────────────────────────────────────────
+  {name:'GPT-4o mini',  inp:0.15,  out:0.60,  tag:'GPT-4o · mini'},
+  {name:'GPT-4o',       inp:2.50,  out:10.00, tag:'GPT-4o · flagship'},
+  // ── o-series reasoning ───────────────────────────────────
+  {name:'o4-mini',      inp:1.10,  out:4.40,  tag:'o-series · reasoning'},
+  {name:'o3-mini',      inp:1.10,  out:4.40,  tag:'o-series · reasoning'},
+  {name:'o3',           inp:10.00, out:40.00, tag:'o-series · reasoning'},
 ];
 var JUDGE_MODELS = [
-  {name:'GPT-4o mini',  inp:0.15, out:0.60},
-  {name:'GPT-4.1 nano', inp:0.10, out:0.40},
+  {name:'GPT-4o mini',  inp:0.15,  out:0.60},
+  {name:'GPT-4.1 nano', inp:0.10,  out:0.40},
+  {name:'GPT-5-nano',   inp:0.05,  out:0.40},
+  {name:'o4-mini',      inp:1.10,  out:4.40},
+  {name:'o3-mini',      inp:1.10,  out:4.40},
   null,
 ];
 var INTENT_MODELS = [
-  {name:'GPT-4o mini',  inp:0.15, out:0.60},
-  {name:'GPT-4.1 nano', inp:0.10, out:0.40},
-  {name:'GPT-4.1 mini', inp:0.40, out:1.60},
+  {name:'GPT-4o mini',  inp:0.15,  out:0.60},
+  {name:'GPT-4.1 nano', inp:0.10,  out:0.40},
+  {name:'GPT-5-nano',   inp:0.05,  out:0.40},
+  {name:'GPT-4.1 mini', inp:0.40,  out:1.60},
+  {name:'o4-mini',      inp:1.10,  out:4.40},
 ];
 
 function g(id){ return document.getElementById(id); }
@@ -803,7 +839,7 @@ function calc(){
   var ratio    = parseInt(g('s_ratio').value);
   var mainM    = MODELS[parseInt(g('sel_llm').value)];
   var judgeIdx = parseInt(g('sel_judge').value);
-  var judgeM   = judgeIdx === 2 ? mainM : JUDGE_MODELS[judgeIdx];
+  var judgeM   = judgeIdx === 5 ? mainM : JUDGE_MODELS[judgeIdx];
   var intentM  = INTENT_MODELS[parseInt(g('sel_intent').value)];
 
   var useJudge  = g('t_judge').checked;
